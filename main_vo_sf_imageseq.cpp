@@ -42,7 +42,7 @@ int main()
 	//Set first image to load, decimation factor and the sequence dir
 	unsigned int im_count = 1;
 	const unsigned int decimation = 1; //5
-	std::string dir = ".../data/sequence people moving/"; 
+	std::string dir = "D:\\Projects\\Joint-VO-SF\\data\\sequence people moving\\"; 
 
 	//Load image and create pyramid
 	cf.loadImageFromSequence(dir, im_count, res_factor);
@@ -66,6 +66,7 @@ int main()
 
         //Load new image and solve
         case 'n':
+		case 'N':
 			im_count += decimation;
 			stop = cf.loadImageFromSequence(dir, im_count, res_factor);
             cf.run_VO_SF(true);
@@ -75,11 +76,13 @@ int main()
 
 		//Start/Stop continuous estimation
 		case 's':
+		case 'S':
 			continuous_exec = !continuous_exec;
 			break;
 			
 		//Close the program
 		case 'e':
+		case 'E':
 			stop = true;
 			break;
 		}

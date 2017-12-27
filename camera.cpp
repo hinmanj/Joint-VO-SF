@@ -25,6 +25,7 @@
 #include <PS1080.h>
 
 
+
 RGBD_Camera::RGBD_Camera(unsigned int res_factor)
 {
     cam_mode = res_factor; // (1 - 640 x 480, 2 - 320 x 240)
@@ -163,4 +164,119 @@ void RGBD_Camera::disableAutoExposureAndWhiteBalance()
     printf("Auto White balance: %s \n", rgb.getCameraSettings()->getAutoWhiteBalanceEnabled() ? "ON" : "OFF");
 }
 
+
+
+
+//-------------------------------------------------------------------------------------------------------------------
+
+
+RealSense_Camera::RealSense_Camera(unsigned int res_factor)
+{
+	cam_mode = res_factor; // (1 - 640 x 480, 2 - 320 x 240)
+	max_distance = 4.5f;
+}
+
+
+bool RealSense_Camera::openCamera()
+{
+	if (ctx.get_device_count() == 0) throw std::runtime_error("No device detected. Is it plugged in?");
+	device = ctx.get_device(0);
+
+	device->enable_stream(rs::stream::depth, 640, 480, rs::format::z16, 30);
+	device->enable_stream(rs::stream::color, 640, 480, rs::format::rgb8, 30);
+
+	std::string name = device->get_name();
+	if (name == "Intel RealSense R200")
+	{
+		device->set_option(rs::option::r200_lr_auto_exposure_enabled, false);
+		//device->set_option(rs::option::r200_lr_gain, 1600);
+	}
+
+	// Start our device
+	device->start();
+
+
+	if (name == "Intel RealSense R200")
+	{
+		rs_apply_depth_control_preset((rs_device*)device, 4);// ::use preset "5" ("OPTIMIZED")
+	}
+#if _DEBUG
+	depth_intrin = device->get_stream_intrinsics(rs::stream::depth);
+#else
+	depth_intrin = device->get_stream_intrinsics(rs::stream::depth_aligned_to_rectified_color);
+#endif
+	color_intrin = device->get_stream_intrinsics(rs::stream::rectified_color);
+
+	dimage = new uint16_t[sizeof(uint16_t) * depth_intrin.width * depth_intrin.height];
+	rgb = new uint8_t[sizeof(uint8_t) * color_intrin.width * color_intrin.height * 3];
+
+	return 0;
+}
+
+void RealSense_Camera::closeCamera()
+{
+	delete dimage;
+	delete rgb;
+	device->stop();
+}
+
+void RealSense_Camera::loadFrame(Eigen::MatrixXf &depth_wf, Eigen::MatrixXf &color_wf)
+{
+	device->wait_for_frames();
+
+#if _DEBUG
+	dimage = (uint16_t*)device->get_frame_data(rs::stream::depth);
+#else
+	dimage = (uint16_t*)device->get_frame_data(rs::stream::depth_aligned_to_rectified_color);
+#endif
+	rgb = (uint8_t*)device->get_frame_data(rs::stream::rectified_color);
+
+	
+	const float norm_factor = 1.f / 255.f;
+
+	const int height = color_intrin.height;
+	const int width = color_intrin.width;
+
+	if ((depth_intrin.width != color_intrin.width) || (depth_intrin.height != color_intrin.height))
+		printf("\n The RGB and the depth frames don't have the same size.");
+	else
+	{
+		const float max_dist_mm = 1000.f*max_distance;
+
+		for (int yc = height - 1; yc >= 0; --yc)
+		{
+			for (int xc = width - 1; xc >= 0; --xc)
+			{
+				uint16_t depth = dimage[xc + (yc * width)];
+				uint8_t r = rgb[(xc * 3 + 0) + (yc * width * 3)];
+				uint8_t g = rgb[(xc * 3 + 1) + (yc * width * 3)];
+				uint8_t b = rgb[(xc * 3 + 2) + (yc * width * 3)];
+
+				color_wf(yc, xc) = norm_factor*(0.299f*r + 0.587f*g + 0.114f*b);
+				depth_wf(yc, xc) = 0.001f*(depth)*(depth < max_dist_mm);
+			}
+		}
+	}
+}
+
+void RealSense_Camera::disableAutoExposureAndWhiteBalance()
+{
+	device->wait_for_frames();
+
+#if _DEBUG
+	dimage = (uint16_t*)device->get_frame_data(rs::stream::depth);
+#else
+	dimage = (uint16_t*)device->get_frame_data(rs::stream::depth_aligned_to_rectified_color);
+#endif
+	rgb = (uint8_t*)device->get_frame_data(rs::stream::rectified_color);
+
+	std::string name = device->get_name();
+	if (name == "Intel RealSense R200")
+	{
+		device->set_option(rs::option::r200_lr_auto_exposure_enabled, true);
+		//device->set_option(rs::option::r200_lr_gain, 1600);
+		device->set_option(rs::option::color_enable_auto_white_balance, false);
+		device->set_option(rs::option::color_enable_auto_exposure, false);
+	}
+}
 

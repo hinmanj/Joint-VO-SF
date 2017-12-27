@@ -1117,12 +1117,14 @@ void VO_SF::computeSceneFlowFromRigidMotions()
 	Matrix<bool, NUM_LABELS, 1> ignore_label; ignore_label.fill(true);
 	for (unsigned int l_here=0; l_here<NUM_LABELS; l_here++)
 		for (unsigned int l=0; l<NUM_LABELS; l++)
-			if (connectivity[l_here][l])
-				if (label_dynamic[l])
+			//if (connectivity[l_here][l])
+			{
+				//if (label_dynamic[l])
 				{
 					ignore_label(l_here) = false;
 					continue;
 				}
+			}
 
 	Matrix4f trans; 
     for (unsigned int u = 0; u<cols; u++)
@@ -1135,7 +1137,7 @@ void VO_SF::computeSceneFlowFromRigidMotions()
             {			
 				//Interpolate between the transformations
                 trans.fill(0.f);
-				bool pixel_static = true;
+				bool pixel_static = false;
 
                 for (unsigned int l=0; l<NUM_LABELS; l++)
 				{

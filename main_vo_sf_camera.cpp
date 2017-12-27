@@ -39,7 +39,7 @@ int main()
 {	
     unsigned int res_factor = 1;
 	VO_SF cf(res_factor);
-	RGBD_Camera camera(res_factor);
+	RealSense_Camera camera(res_factor);
 
 	//Create the 3D Scene
 	cf.initializeSceneCamera();
@@ -71,6 +71,7 @@ int main()
 			
         //Capture a new frame
 		case  'n':
+		case 'N':
 			cf.use_b_temp_reg = false; //I turn it off here for individual framepair tests
             camera.loadFrame(cf.depth_wf, cf.intensity_wf);
 			cf.createImagePyramid();
@@ -83,6 +84,7 @@ int main()
 
         //Compute the solution
         case 'a':
+		case 'A':
             cf.run_VO_SF(false);
             cf.createImagesOfSegmentations();
 
@@ -91,17 +93,20 @@ int main()
 
         //Turn on/off continuous estimation
         case 's':
+		case 'S':
             continuous_exec = !continuous_exec;
             break;
 
 		//Reset the camera pose
 		case 'r':
+		case 'R':
 			cf.cam_pose.setFromValues(0,0,1.5,0,0,0);
 			anything_new = true;
 			break;
 			
 		//Close the program
 		case 'e':
+		case 'E':
 			stop = true;
 			break;
 		}
