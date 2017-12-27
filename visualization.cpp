@@ -379,19 +379,34 @@ void VO_SF::updateSceneDatasets(const CPose3D &gt, const CPose3D &gt_old)
 
 }
 
-void VO_SF::updateSceneImageSeq()
+void VO_SF::updateSceneImageSeq(bool usePrecomputed = false, int precomputed_index = 0)
 {
 	const unsigned int repr_level = round(log2(width/cols));
 	CImage image;
 
+	MatrixXf depth_old_ref;
+	MatrixXf yy_old_ref;
+	MatrixXf xx_old_ref;
+
 	//Refs
-	const MatrixXf &depth_old_ref = depth_old[repr_level];
-	const MatrixXf &yy_old_ref = yy_old[repr_level];
-	const MatrixXf &xx_old_ref = xx_old[repr_level];
+	if (usePrecomputed)
+	{
+		depth_old_ref = std::get<3>(motionfield_computed[precomputed_index])[repr_level];
+		yy_old_ref = std::get<5>(motionfield_computed[precomputed_index])[repr_level];
+		xx_old_ref = std::get<4>(motionfield_computed[precomputed_index])[repr_level];
+	}
+	else
+	{
+		depth_old_ref = depth_old[repr_level];
+		yy_old_ref = yy_old[repr_level];
+		xx_old_ref = xx_old[repr_level];
+	}
+
 	const MatrixXi &labels_ref = labels[repr_level];
 	
 	scene = window.get3DSceneAndLock();
 
+	/*
 	//Camera
 	CPose3D rel_lenspose(0,-0.022,0,0,0,0);
 	CBoxPtr camera = scene->getByClass<CBox>(0);
@@ -409,10 +424,10 @@ void VO_SF::updateSceneImageSeq()
 	//Estimated trajectory
 	opengl::CSetOfLinesPtr estimated_traj = scene->getByClass<CSetOfLines>(0);
 	estimated_traj->appendLine(cam_pose[0], cam_pose[1], cam_pose[2], cam_oldpose[0], cam_oldpose[1], cam_oldpose[2]);
-
+	*/
 	//3D points (last frame)
 	opengl::CPointCloudColouredPtr points = scene->getByClass<CPointCloudColoured>(0);
-	points->setPose(cam_pose);
+	//points->setPose(cam_pose);
 	points->clear();
 	const float brigthing_fact = 0.7f;
 	const unsigned int size_factor = width/cols;
@@ -431,8 +446,8 @@ void VO_SF::updateSceneImageSeq()
 
 	//Scene flow
 	opengl::CVectorField3DPtr sf = scene->getByClass<CVectorField3D>(0);
-	sf->setPose(cam_pose);
-    sf->setPointCoordinates(depth_old[repr_level], xx_old[repr_level], yy_old[repr_level]);
+	//sf->setPose(cam_pose);
+    sf->setPointCoordinates(depth_old_ref, xx_old_ref, yy_old_ref);
 	/* COMMENTED OUT SO IT UPDATES ALL SCENE FLOW PIXELS
 	//Modify scene flow to show only that of the uncertain or dynamic clusters
 	for (unsigned int u=0; u<cols; u++)
@@ -444,9 +459,12 @@ void VO_SF::updateSceneImageSeq()
 				motionfield[2](v,u) = 0.f;
 			}
 			*/
-    sf->setVectorField(motionfield[0], motionfield[1], motionfield[2]);
+	if (usePrecomputed)
+		sf->setVectorField(std::get<0>(motionfield_computed[precomputed_index]), std::get<1>(motionfield_computed[precomputed_index]), std::get<2>(motionfield_computed[precomputed_index]));
+	else
+		sf->setVectorField(motionfield[0], motionfield[1], motionfield[2]);
 
-
+	/*
 	//Image
 	COpenGLViewportPtr vp_image = scene->getViewport("image");
     image.setFromRGBMatrices(im_r_old, im_g_old, im_b_old, true);
@@ -467,7 +485,7 @@ void VO_SF::updateSceneImageSeq()
     image.flipVertical();
 	//image.flipHorizontal();
     vp_backg->setImageView(image);
-			
+	*/		
 	window.unlockAccess3DScene();
 	window.repaint();
 

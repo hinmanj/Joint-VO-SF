@@ -267,6 +267,14 @@ void VO_SF::saveFlowAndSegmToFile(string files_dir)
 	cout << endl << "Segmentation (kmeans) saved in " << name;
 }
 
+void VO_SF::push_old_frames_back()
+{
+	//Push the frames back
+	intensity_old.swap(intensity);
+	depth_old.swap(depth);
+	xx_old.swap(xx);
+	yy_old.swap(yy);
+}
 
 void VO_SF::createImagePyramid()
 {	
@@ -1162,6 +1170,9 @@ void VO_SF::computeSceneFlowFromRigidMotions()
             }
             else {mx(v,u) = 0.f; my(v,u) = 0.f; mz(v,u) = 0.f; }
         }
+
+	std::tuple<Eigen::MatrixXf, Eigen::MatrixXf, Eigen::MatrixXf, std::vector<Eigen::MatrixXf>, std::vector<Eigen::MatrixXf>, std::vector<Eigen::MatrixXf>> t = std::tuple<Eigen::MatrixXf, Eigen::MatrixXf, Eigen::MatrixXf, std::vector<Eigen::MatrixXf>, std::vector<Eigen::MatrixXf>, std::vector<Eigen::MatrixXf>>( motionfield[0], motionfield[1], motionfield[2], depth_old, xx_old, yy_old);
+	motionfield_computed.push_back(t);
 }
 
 

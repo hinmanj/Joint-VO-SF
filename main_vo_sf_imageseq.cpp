@@ -41,6 +41,7 @@ int main()
 
 	//Set first image to load, decimation factor and the sequence dir
 	unsigned int im_count = 0;
+	bool all_precomputed = false;
 	const unsigned int decimation = 1; //5
 	std::string dir = "D:\\Projects\\Joint-VO-SF\\data\\realsense save\\"; 
 
@@ -71,7 +72,7 @@ int main()
 			stop = cf.loadImageFromSequence(dir, im_count, res_factor);
             cf.run_VO_SF(true);
             cf.createImagesOfSegmentations();
-            cf.updateSceneImageSeq();
+            cf.updateSceneImageSeq(false, 0);
             break;
 
 		//Start/Stop continuous estimation
@@ -91,10 +92,30 @@ int main()
 		{
 			im_count += decimation;
 			stop = cf.loadImageFromSequence(dir, im_count, res_factor);
-            cf.run_VO_SF(true);
-            cf.createImagesOfSegmentations();
-			cf.updateSceneImageSeq();
-			cf.saveFlowAndSegmToFile(dir);
+			if (stop)
+			{
+				all_precomputed = true;
+				stop = false;
+				im_count = 0;
+				stop = cf.loadImageFromSequence(dir, im_count, res_factor);
+				cf.push_old_frames_back();
+				im_count += decimation;
+				stop = cf.loadImageFromSequence(dir, im_count, res_factor);
+			}
+			if (!all_precomputed)
+			{
+				cf.run_VO_SF(true);
+				cf.createImagesOfSegmentations();
+			}
+			if (all_precomputed)
+			{
+
+				cf.push_old_frames_back();
+				cf.updateSceneImageSeq(true, im_count - 1);
+			}
+			else
+				cf.updateSceneImageSeq(false, im_count);
+			//cf.saveFlowAndSegmToFile(dir);
 		}
 	}
 

@@ -34,6 +34,7 @@
 #include <unsupported/Eigen/MatrixFunctions>
 #include <opencv2/opencv.hpp>
 
+#include <tuple>
 
 #define NUM_LABELS 24
 
@@ -81,6 +82,9 @@ public:
     Eigen::MatrixXf weights_c, weights_d;							//Pre-weighting used in the solver
     Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> Null;		//Mask for pixels with null depth measurments
 	Eigen::MatrixXf motionfield[3];									//Per-pixel scene flow (coordinates [0] -> depth, [1] -> x, [2] -> y)
+	std::vector<std::tuple<Eigen::MatrixXf, Eigen::MatrixXf, Eigen::MatrixXf, std::vector<Eigen::MatrixXf>, std::vector<Eigen::MatrixXf>, std::vector<Eigen::MatrixXf>>> motionfield_computed;									//Per-pixel scene flow (coordinates [0] -> depth, [1] -> x, [2] -> y)
+	uint32_t num_computed_flows;
+
 	Eigen::Array44f f_mask;											//Convolutional kernel used to build the image pyramid
 
     //Velocities, transformations and poses
@@ -99,6 +103,7 @@ public:
 
 
     VO_SF(unsigned int res_factor);
+	void push_old_frames_back();
     void createImagePyramid();					//Create image pyramids (intensity and depth)
     void warpImages();							//Fast warping (last image towards the prev one)
     void warpImagesParallel();
@@ -177,7 +182,7 @@ public:
 	void initializeSceneImageSeq();
 	void updateSceneCamera(bool clean_sf);
 	void updateSceneDatasets(const mrpt::poses::CPose3D &gt, const mrpt::poses::CPose3D &gt_old);
-	void updateSceneImageSeq();
+	void updateSceneImageSeq(bool usePrecomputed, int precomputed_index);
 	void createImagesOfSegmentations();
 
 
