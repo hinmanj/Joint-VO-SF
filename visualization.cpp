@@ -268,7 +268,7 @@ void VO_SF::updateSceneCamera(bool clean_sf)
 	opengl::CSetOfObjectsPtr reference_cam = scene->getByClass<CSetOfObjects>(0);
 	reference_cam->setPose(cam_pose);
 	scene->insert( reference_cam );
-
+	/*
 	//Points of the last frame
 	opengl::CPointCloudPtr kin_points = scene->getByClass<CPointCloud>(0);
 	kin_points->clear();
@@ -276,7 +276,7 @@ void VO_SF::updateSceneCamera(bool clean_sf)
 		for (unsigned int v=0; v<rows; v++)
             if (depth_ref(v,u) != 0.f)
                 kin_points->insertPoint(depth_ref(v,u), xx_ref(v,u), yy_ref(v,u));
-
+				*/
 
     //Scene flow
     if (clean_sf == true)
@@ -287,7 +287,7 @@ void VO_SF::updateSceneCamera(bool clean_sf)
     }
 
 	opengl::CVectorField3DPtr sf = scene->getByClass<CVectorField3D>(0);
-    sf->setPointCoordinates(depth_old[repr_level], xx_old[repr_level], yy_old[repr_level]);	
+    sf->setPointCoordinates(depth_old[repr_level], xx_old[repr_level], yy_old[repr_level]);
 	sf->setVectorField(motionfield[0], motionfield[1], motionfield[2]);
 
 	//Labels
@@ -433,7 +433,7 @@ void VO_SF::updateSceneImageSeq()
 	opengl::CVectorField3DPtr sf = scene->getByClass<CVectorField3D>(0);
 	sf->setPose(cam_pose);
     sf->setPointCoordinates(depth_old[repr_level], xx_old[repr_level], yy_old[repr_level]);
-
+	/* COMMENTED OUT SO IT UPDATES ALL SCENE FLOW PIXELS
 	//Modify scene flow to show only that of the uncertain or dynamic clusters
 	for (unsigned int u=0; u<cols; u++)
 		for (unsigned int v=0; v<rows; v++)
@@ -443,6 +443,7 @@ void VO_SF::updateSceneImageSeq()
 				motionfield[1](v,u) = 0.f;
 				motionfield[2](v,u) = 0.f;
 			}
+			*/
     sf->setVectorField(motionfield[0], motionfield[1], motionfield[2]);
 
 

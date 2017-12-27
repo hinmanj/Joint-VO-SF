@@ -23,6 +23,8 @@
 
 #include <joint_vo_sf.h>
 #include <camera.h>
+#include <opencv2/opencv.hpp>
+#include <string>
 
 
 // -------------------------------------------------------------------------------
@@ -57,6 +59,8 @@ int main()
 	int pushed_key = 0;
 	bool anything_new = false, stop = false;
     bool clean_sf = false, continuous_exec = false;
+	bool recording = false;
+	int save_file_index = 0;
 
 	
 	while (!stop)
@@ -69,6 +73,12 @@ int main()
 
 		switch (pushed_key) {
 			
+		case 32: //space
+			recording = !recording;
+			continuous_exec = !recording;
+			break;
+
+
         //Capture a new frame
 		case  'n':
 		case 'N':
@@ -111,6 +121,19 @@ int main()
 			break;
 		}
 
+		if (recording)
+		{
+			std::string files_dir = "D:\\Projects\\Joint-VO-SF\\data\\realsense save\\";
+			char daux[50];
+			char caux[50];
+			sprintf(daux, "d%d.png", save_file_index);
+			sprintf(caux, "c%d.png", save_file_index);
+			std::string depth_name = files_dir + daux;
+			std::string color_name = files_dir + caux;
+
+			camera.save_new_frames(depth_name, color_name);
+			save_file_index++;
+		}
         if (continuous_exec)
         {
             camera.loadFrame(cf.depth_wf, cf.intensity_wf);

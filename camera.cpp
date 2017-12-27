@@ -24,6 +24,8 @@
 #include <camera.h>
 #include <PS1080.h>
 
+#include <opencv2/opencv.hpp>
+#include <string>
 
 
 RGBD_Camera::RGBD_Camera(unsigned int res_factor)
@@ -182,8 +184,8 @@ bool RealSense_Camera::openCamera()
 	if (ctx.get_device_count() == 0) throw std::runtime_error("No device detected. Is it plugged in?");
 	device = ctx.get_device(0);
 
-	device->enable_stream(rs::stream::depth, 640, 480, rs::format::z16, 30);
-	device->enable_stream(rs::stream::color, 640, 480, rs::format::rgb8, 30);
+	device->enable_stream(rs::stream::depth, 640, 480, rs::format::z16, 60);
+	device->enable_stream(rs::stream::color, 640, 480, rs::format::rgb8, 60);
 
 	std::string name = device->get_name();
 	if (name == "Intel RealSense R200")
@@ -220,6 +222,24 @@ void RealSense_Camera::closeCamera()
 	device->stop();
 }
 
+void RealSense_Camera::save_new_frames(std::string depth_name, std::string color_name)
+{
+	device->wait_for_frames();
+
+#if _DEBUG
+	dimage = (uint16_t*)device->get_frame_data(rs::stream::depth);
+#else
+	dimage = (uint16_t*)device->get_frame_data(rs::stream::depth_aligned_to_rectified_color);
+#endif
+	rgb = (uint8_t*)device->get_frame_data(rs::stream::rectified_color);
+
+	cv::Mat out_depth_image(cv::Size(depth_intrin.width, depth_intrin.height), CV_16UC1, (uint16_t*)dimage, cv::Mat::AUTO_STEP);
+	cv::imwrite(depth_name, out_depth_image);
+	cv::Mat out_color_image(cv::Size(color_intrin.width, color_intrin.height), CV_8UC3, (uint8_t*)rgb);
+	cv::cvtColor(out_color_image, out_color_image, cv::COLOR_BGR2RGB);
+	cv::imwrite(color_name, out_color_image);
+}
+
 void RealSense_Camera::loadFrame(Eigen::MatrixXf &depth_wf, Eigen::MatrixXf &color_wf)
 {
 	device->wait_for_frames();
@@ -231,7 +251,6 @@ void RealSense_Camera::loadFrame(Eigen::MatrixXf &depth_wf, Eigen::MatrixXf &col
 #endif
 	rgb = (uint8_t*)device->get_frame_data(rs::stream::rectified_color);
 
-	
 	const float norm_factor = 1.f / 255.f;
 
 	const int height = color_intrin.height;
@@ -275,8 +294,8 @@ void RealSense_Camera::disableAutoExposureAndWhiteBalance()
 	{
 		device->set_option(rs::option::r200_lr_auto_exposure_enabled, true);
 		//device->set_option(rs::option::r200_lr_gain, 1600);
-		device->set_option(rs::option::color_enable_auto_white_balance, false);
-		device->set_option(rs::option::color_enable_auto_exposure, false);
+		//device->set_option(rs::option::color_enable_auto_white_balance, false);
+		//device->set_option(rs::option::color_enable_auto_exposure, false);
 	}
 }
 

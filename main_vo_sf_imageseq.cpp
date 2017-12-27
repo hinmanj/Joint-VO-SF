@@ -35,14 +35,14 @@
 
 int main()
 {	
-    const unsigned int res_factor = 2;
+    const unsigned int res_factor = 1;
 	VO_SF cf(res_factor);
 
 
 	//Set first image to load, decimation factor and the sequence dir
-	unsigned int im_count = 1;
+	unsigned int im_count = 0;
 	const unsigned int decimation = 1; //5
-	std::string dir = "D:\\Projects\\Joint-VO-SF\\data\\sequence people moving\\"; 
+	std::string dir = "D:\\Projects\\Joint-VO-SF\\data\\realsense save\\"; 
 
 	//Load image and create pyramid
 	cf.loadImageFromSequence(dir, im_count, res_factor);
@@ -94,6 +94,7 @@ int main()
             cf.run_VO_SF(true);
             cf.createImagesOfSegmentations();
 			cf.updateSceneImageSeq();
+			cf.saveFlowAndSegmToFile(dir);
 		}
 	}
 

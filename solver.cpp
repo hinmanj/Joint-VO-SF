@@ -187,7 +187,7 @@ bool VO_SF::loadImageFromSequence(string files_dir, unsigned int index, unsigned
 
     //                              Load the first frame
     //==============================================================================
-    sprintf(aux, "i%d.png", index);
+    sprintf(aux, "c%d.png", index);
     string name = files_dir + aux;
 
 	cv::Mat color = cv::imread(name.c_str(), CV_LOAD_IMAGE_COLOR);
