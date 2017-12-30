@@ -46,6 +46,7 @@ public:
 
 	bool openCamera();
 	void closeCamera();
+	void save_camera_intrinsics_to_file(std::string file_name);
 	void save_new_frames(std::string depth_name, std::string color_name);
 	void loadFrame(Eigen::MatrixXf &depth_wf, Eigen::MatrixXf &color_wf);
 	void disableAutoExposureAndWhiteBalance();

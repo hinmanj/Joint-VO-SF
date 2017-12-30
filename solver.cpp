@@ -33,10 +33,11 @@ using namespace Eigen;
 VO_SF::VO_SF(unsigned int res_factor) : ws_foreground(3*640*480/(2*res_factor*res_factor)), ws_background(3*640*480/(2*res_factor*res_factor))  
 {
     //Resolutions and levels
-	rows = 240;
-    cols = 320;
-	fovh = M_PI*62.5/180.0;
-    fovv = M_PI*48.5/180.0;
+	rows = 480;
+    cols = 640;
+	/* HARD CODING FIELD OF VIEW TO MATCH MY CAMERA THAT I'M TOO LAZY TO LOAD INTO THIS PROJECT */
+	fovh = 57.0191422; // M_PI*62.5 / 180.0;
+	fovv = 44.3302460; // M_PI*48.5 / 180.0;
     width = 640/res_factor;
     height = 480/res_factor;
 	ctf_levels = log2(cols/40) + 2;
@@ -221,6 +222,23 @@ bool VO_SF::loadImageFromSequence(string files_dir, unsigned int index, unsigned
             depth_wf(height-1-v,u) = depth_float.at<float>(res_factor*v,res_factor*u);
 
 	return false;
+}
+
+void VO_SF::saveFlowToExr(std::string flow_name)
+{
+	cv::Mat out_flow_image = cv::Mat::zeros(cv::Size(motionfield[0].cols(), motionfield[0].rows()), CV_32FC3);
+	for (unsigned int v = 0; v<rows; v++)
+	{
+		for (unsigned int u = 0; u<cols; u++)
+		{
+			out_flow_image.at<cv::Vec3f>(v,u) = cv::Vec3f(motionfield[1](rows - 1 - v, u), motionfield[2](rows - 1 - v, u), motionfield[0](rows - 1 - v, u));
+		}
+	}
+	//memcpy(&out_flow_image.data[out_flow_image.rows * out_flow_image.cols * 0], motionfield[1].data(), sizeof(float) * out_flow_image.rows * out_flow_image.cols);
+	//memcpy(&out_flow_image.data[out_flow_image.rows * out_flow_image.cols * 1], motionfield[2].data(), sizeof(float) * out_flow_image.rows * out_flow_image.cols);
+	//memcpy(&out_flow_image.data[out_flow_image.rows * out_flow_image.cols * 2], motionfield[0].data(), sizeof(float) * out_flow_image.rows * out_flow_image.cols);
+	//cv::cvtColor(out_color_image, out_color_image, cv::COLOR_BGR2RGB);
+	cv::imwrite(flow_name, out_flow_image);
 }
 
 void VO_SF::saveFlowAndSegmToFile(string files_dir)
@@ -1171,7 +1189,7 @@ void VO_SF::computeSceneFlowFromRigidMotions()
             else {mx(v,u) = 0.f; my(v,u) = 0.f; mz(v,u) = 0.f; }
         }
 
-	std::tuple<Eigen::MatrixXf, Eigen::MatrixXf, Eigen::MatrixXf, std::vector<Eigen::MatrixXf>, std::vector<Eigen::MatrixXf>, std::vector<Eigen::MatrixXf>> t = std::tuple<Eigen::MatrixXf, Eigen::MatrixXf, Eigen::MatrixXf, std::vector<Eigen::MatrixXf>, std::vector<Eigen::MatrixXf>, std::vector<Eigen::MatrixXf>>( motionfield[0], motionfield[1], motionfield[2], depth_old, xx_old, yy_old);
+	auto t = std::tuple<Eigen::MatrixXf, Eigen::MatrixXf, Eigen::MatrixXf, std::vector<Eigen::MatrixXf>, std::vector<Eigen::MatrixXf>, std::vector<Eigen::MatrixXf>, std::vector<Eigen::MatrixXi>>( motionfield[0], motionfield[1], motionfield[2], depth_old, xx_old, yy_old, labels);
 	motionfield_computed.push_back(t);
 }
 

@@ -82,7 +82,15 @@ public:
     Eigen::MatrixXf weights_c, weights_d;							//Pre-weighting used in the solver
     Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> Null;		//Mask for pixels with null depth measurments
 	Eigen::MatrixXf motionfield[3];									//Per-pixel scene flow (coordinates [0] -> depth, [1] -> x, [2] -> y)
-	std::vector<std::tuple<Eigen::MatrixXf, Eigen::MatrixXf, Eigen::MatrixXf, std::vector<Eigen::MatrixXf>, std::vector<Eigen::MatrixXf>, std::vector<Eigen::MatrixXf>>> motionfield_computed;									//Per-pixel scene flow (coordinates [0] -> depth, [1] -> x, [2] -> y)
+	std::vector<std::tuple<
+		Eigen::MatrixXf,
+		Eigen::MatrixXf,
+		Eigen::MatrixXf,
+		std::vector<Eigen::MatrixXf>,
+		std::vector<Eigen::MatrixXf>,
+		std::vector<Eigen::MatrixXf>,
+		std::vector<Eigen::MatrixXi>
+	>> motionfield_computed;									//Per-pixel scene flow (coordinates [0] -> depth, [1] -> x, [2] -> y)
 	uint32_t num_computed_flows;
 
 	Eigen::Array44f f_mask;											//Convolutional kernel used to build the image pyramid
@@ -191,6 +199,7 @@ public:
 	//--------------------------------------------------------------
 	void loadImagePairFromFiles(std::string files_dir, unsigned int res_factor);
 	bool loadImageFromSequence(std::string files_dir, unsigned int index, unsigned int res_factor);
+	void saveFlowToExr(std::string flow_name);
 	void saveFlowAndSegmToFile(std::string files_dir);	
 
 };

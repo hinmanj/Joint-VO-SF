@@ -48,6 +48,10 @@ int main()
 
 	//Initialize camera and method
     camera.openCamera();
+
+	cf.fovh = camera.depth_intrin.hfov();
+	cf.fovv = camera.depth_intrin.vfov();
+
     camera.disableAutoExposureAndWhiteBalance();
 	camera.loadFrame(cf.depth_wf, cf.intensity_wf);
     cf.createImagePyramid();
@@ -119,11 +123,16 @@ int main()
 		case 'E':
 			stop = true;
 			break;
+			
+		case 'v':
+		case 'V':
+			camera.save_camera_intrinsics_to_file("D:\\Projects\\Joint-VO-SF\\data\\realsense save with flow\\camera_intrin.xml");
+			break;
 		}
 
 		if (recording)
 		{
-			std::string files_dir = "D:\\Projects\\Joint-VO-SF\\data\\realsense save\\";
+			std::string files_dir = "D:\\Projects\\Joint-VO-SF\\data\\realsense save with flow\\";
 			char daux[50];
 			char caux[50];
 			sprintf(daux, "d%d.png", save_file_index);
@@ -132,6 +141,7 @@ int main()
 			std::string color_name = files_dir + caux;
 
 			camera.save_new_frames(depth_name, color_name);
+			cf.saveFlowAndSegmToFile(files_dir);
 			save_file_index++;
 		}
         if (continuous_exec)

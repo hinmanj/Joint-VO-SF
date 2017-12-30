@@ -268,7 +268,7 @@ void VO_SF::updateSceneCamera(bool clean_sf)
 	opengl::CSetOfObjectsPtr reference_cam = scene->getByClass<CSetOfObjects>(0);
 	reference_cam->setPose(cam_pose);
 	scene->insert( reference_cam );
-	/*
+	
 	//Points of the last frame
 	opengl::CPointCloudPtr kin_points = scene->getByClass<CPointCloud>(0);
 	kin_points->clear();
@@ -276,7 +276,7 @@ void VO_SF::updateSceneCamera(bool clean_sf)
 		for (unsigned int v=0; v<rows; v++)
             if (depth_ref(v,u) != 0.f)
                 kin_points->insertPoint(depth_ref(v,u), xx_ref(v,u), yy_ref(v,u));
-				*/
+				
 
     //Scene flow
     if (clean_sf == true)
@@ -289,6 +289,9 @@ void VO_SF::updateSceneCamera(bool clean_sf)
 	opengl::CVectorField3DPtr sf = scene->getByClass<CVectorField3D>(0);
     sf->setPointCoordinates(depth_old[repr_level], xx_old[repr_level], yy_old[repr_level]);
 	sf->setVectorField(motionfield[0], motionfield[1], motionfield[2]);
+
+	//change the motion field to give contrast to the fast-moving things...
+	sf->setMotionFieldColormap(1, 1, 1, 0, 0, 1);
 
 	//Labels
 	COpenGLViewportPtr vp_labels = scene->getViewport("labels");
@@ -387,6 +390,7 @@ void VO_SF::updateSceneImageSeq(bool usePrecomputed = false, int precomputed_ind
 	MatrixXf depth_old_ref;
 	MatrixXf yy_old_ref;
 	MatrixXf xx_old_ref;
+	MatrixXi labels_ref;
 
 	//Refs
 	if (usePrecomputed)
@@ -394,15 +398,15 @@ void VO_SF::updateSceneImageSeq(bool usePrecomputed = false, int precomputed_ind
 		depth_old_ref = std::get<3>(motionfield_computed[precomputed_index])[repr_level];
 		yy_old_ref = std::get<5>(motionfield_computed[precomputed_index])[repr_level];
 		xx_old_ref = std::get<4>(motionfield_computed[precomputed_index])[repr_level];
+		labels_ref = std::get<6>(motionfield_computed[precomputed_index])[repr_level];
 	}
 	else
 	{
 		depth_old_ref = depth_old[repr_level];
 		yy_old_ref = yy_old[repr_level];
 		xx_old_ref = xx_old[repr_level];
+		labels_ref = labels[repr_level];
 	}
-
-	const MatrixXi &labels_ref = labels[repr_level];
 	
 	scene = window.get3DSceneAndLock();
 
@@ -463,8 +467,10 @@ void VO_SF::updateSceneImageSeq(bool usePrecomputed = false, int precomputed_ind
 		sf->setVectorField(std::get<0>(motionfield_computed[precomputed_index]), std::get<1>(motionfield_computed[precomputed_index]), std::get<2>(motionfield_computed[precomputed_index]));
 	else
 		sf->setVectorField(motionfield[0], motionfield[1], motionfield[2]);
-
-	/*
+	
+	//change the motion field to give contrast to the fast-moving things...
+	//sf->setMotionFieldColormap(1, 1, 1, 0, 0, 1);
+	
 	//Image
 	COpenGLViewportPtr vp_image = scene->getViewport("image");
     image.setFromRGBMatrices(im_r_old, im_g_old, im_b_old, true);
@@ -485,7 +491,7 @@ void VO_SF::updateSceneImageSeq(bool usePrecomputed = false, int precomputed_ind
     image.flipVertical();
 	//image.flipHorizontal();
     vp_backg->setImageView(image);
-	*/		
+	
 	window.unlockAccess3DScene();
 	window.repaint();
 

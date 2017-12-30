@@ -222,6 +222,29 @@ void RealSense_Camera::closeCamera()
 	device->stop();
 }
 
+void RealSense_Camera::save_camera_intrinsics_to_file(std::string file_name)
+{
+	cv::FileStorage intrin_file;
+	intrin_file.open(file_name, cv::FileStorage::WRITE);
+
+	intrin_file << "width" << depth_intrin.width;
+	intrin_file << "height" << depth_intrin.height;
+	intrin_file << "ppx" << depth_intrin.ppx;
+	intrin_file << "ppy" << depth_intrin.ppy;
+	intrin_file << "fx" << depth_intrin.fx;
+	intrin_file << "fy" << depth_intrin.fy;
+
+	int model = (int)depth_intrin.model();
+	intrin_file << "model" << model;
+
+	intrin_file << "coeffs0" << depth_intrin.coeffs[0];
+	intrin_file << "coeffs1" << depth_intrin.coeffs[1];
+	intrin_file << "coeffs2" << depth_intrin.coeffs[2];
+	intrin_file << "coeffs3" << depth_intrin.coeffs[3];
+	intrin_file << "coeffs4" << depth_intrin.coeffs[4];
+	intrin_file.release();
+}
+
 void RealSense_Camera::save_new_frames(std::string depth_name, std::string color_name)
 {
 	device->wait_for_frames();

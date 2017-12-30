@@ -64,7 +64,13 @@ int main()
             pushed_key = 0;
 
 		switch (pushed_key) {
-
+		case 37: //left
+			im_count -= decimation;
+			cf.updateSceneImageSeq(true, im_count - 1);
+			break;
+		case 39: //right
+			im_count += decimation;
+			break;
         //Load new image and solve
         case 'n':
 		case 'N':
@@ -106,16 +112,21 @@ int main()
 			{
 				cf.run_VO_SF(true);
 				cf.createImagesOfSegmentations();
+
+				std::string files_dir = "D:\\Projects\\Joint-VO-SF\\data\\realsense save\\";
+				char aux[50];
+				sprintf(aux, "flow_%d_%d.exr", im_count - 1, im_count);
+				std::string flow_name = files_dir + aux;
+				cf.saveFlowToExr(flow_name);
 			}
 			if (all_precomputed)
 			{
-
 				cf.push_old_frames_back();
 				cf.updateSceneImageSeq(true, im_count - 1);
 			}
 			else
 				cf.updateSceneImageSeq(false, im_count);
-			//cf.saveFlowAndSegmToFile(dir);
+
 		}
 	}
 
